@@ -26,6 +26,17 @@ class Post(db.Model):
     content = db.Column(db.Text, nullable=False)
     posted_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'),nullable=False)
+    comments = db.relationship('Comment', backref='post', lazy=True)
 
     def __repr__(self):
         return f"Post('{self.title}', '{self.posted_date}')"
+
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    content = db.Column(db.String(255), nullable=False)
+    created_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    user = db.Column(db.Boolean(), default=False)
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'),nullable=False)
+
+    def __repr__(self):
+        return f"Comment('{self.user}')"

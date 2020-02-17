@@ -1,7 +1,7 @@
 import os
 import secrets
 from PIL import Image
-from flask import render_template, url_for, flash, redirect, request, abort
+from flask import render_template, url_for, flash, redirect, request, abort, jsonify, make_response
 from flaskblog import app, db, bcrypt
 from flaskblog.forms import RegistrationForm, LoginForm, UpdateAccountForm, PostForm
 from flaskblog.models import User, Post
@@ -11,7 +11,9 @@ from flask_login import login_user, current_user, logout_user, login_required
 @app.route("/")
 @app.route("/home")
 def home():
-    posts = Post.query.all()
+    # posts = Post.query.all()
+    page = request.args.get('page', 1, type=int)   # gets the page and the id of the page
+    posts = Post.query.order_by(Post.posted_date.desc()).paginate(page=page, per_page=5) #sets the ordering of the items in the page and also sets the number of items per page
     return render_template('home.html', posts=posts)
 
 
@@ -22,14 +24,15 @@ def about():
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():
+    # if a user is already logged in and they click on the register button, they should be redirected to the homepage. althoug this was update to be hidden for authethicated users
     if current_user.is_authenticated:
         return redirect(url_for('home'))
     form = RegistrationForm()
-    if form.validate_on_submit():
-        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        user = User(username=form.username.data, email=form.email.data, password=hashed_password)
-        db.session.add(user)
-        db.session.commit()
+    if form.validate_on_submit(): # validates the form for correct entries
+        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8') #hashes the passowrd for password safetyn purpose
+        user = User(username=form.username.data, email=form.email.data, password=hashed_password) #instantiate the user with the data colected from the form
+        db.session.add(user) #adds user to the database
+        db.session.commit() # commits user to the database
         flash('Your account has been created! You are now able to log in', 'success')
         return redirect(url_for('login'))
     return render_template('register.html', title='Register', form=form)
@@ -37,6 +40,7 @@ def register():
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
+    # if a user is already logged in and they click on the log in button, they should be redirected to the homepage. althoug this was update to be hidden for authethicated users
     if current_user.is_authenticated:
         return redirect(url_for('home'))
     form = LoginForm()
@@ -44,7 +48,7 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data):
             login_user(user, remember=form.remember.data)
-            next_page = request.args.get('next')
+            next_page = request.args.get('next')  #gets the next parameter from the url
             return redirect(next_page) if next_page else redirect(url_for('home'))
         else:
             flash('Login Unsuccessful. Please check email and password', 'danger')
@@ -142,3 +146,20 @@ def delete_post(post_id):
     db.session.commit()
     flash('Your post has been deleted!', 'success')
     return redirect(url_for('home'))
+
+
+@app.route('/user/<string:username>')
+def user_posts(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    page = request.args.get('page', 1, type=int)
+    posts = Post.query.filter_by(author=user).\
+                order_by(Post.posted_date.desc()).\
+                    paginate(page=page, per_page=5)
+    return render_template('user_posts.html', posts=posts, user=user)
+
+
+
+
+
+
+# @app.route('post/<int:post_id>/comment')
