@@ -9,7 +9,5 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 
 db = SQLAlchemy(app)
 
-
-
 if __name__ == '__main__':
     app.run(debug=True)
