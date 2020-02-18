@@ -32,7 +32,7 @@ class User(db.Model, UserMixin):
             user_id = s.loads(token)['user_id']
         except:
             return None
-         return User.query.get(user_id)
+        return User.query.get(user_id)
 
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key = True)
