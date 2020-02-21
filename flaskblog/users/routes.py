@@ -4,7 +4,7 @@ from flaskblog.models import User, Post
 from flaskblog import bcrypt
 from flaskblog.users.forms import (LoginForm, RegistrationForm, 
                                 RequestResetForm, ResetPasswordForm)
-
+                                
 from flaskblog.users.utils import send_reset_email, save_picture
 
 users = Blueprint('users', __name__)
